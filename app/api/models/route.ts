@@ -25,18 +25,7 @@ export async function GET(request: Request) {
     .then(response => response.json())
     .then(response => console.log(response))
     .catch(err => console.error(err));
-  return new Response(JSON.stringify({
-    "object": "list",
-    "data": [
-      {
-        id: 'gpt-4o',
-        object: 'model',
-        created: 1720690582139,
-        owned_by: 'system'
-      },
-    ],
-  }
-  ), {
+  return new Response(JSON.stringify(models), {
     status: 200,
     headers: { 'Content-Type': 'application/json' }
   });
