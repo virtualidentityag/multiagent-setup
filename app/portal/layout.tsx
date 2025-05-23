@@ -1,4 +1,5 @@
 import { signOut } from '@/auth';
+import { Button } from "@/components/ui/button"
 
 export default function PortalLayout({
   children,
@@ -13,7 +14,7 @@ export default function PortalLayout({
           await signOut()
         }}
       >
-        <button type="submit">Sign Out</button>
+        <Button type="submit">Sign Out</Button>
       </form>
       {children}
     </>
