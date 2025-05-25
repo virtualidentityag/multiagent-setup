@@ -1,9 +1,15 @@
-import Chat from '@/components/chat';
+import { auth } from '@/auth'
 
+export default async function Portal() {
+  const session = await auth()
 
-export default function Portal() {
+  if (!session) {
+    return <div>Not authenticated</div>
+  }
+
   return (
-    <Chat sessionKey="a889d2">
-    </Chat>
-  );
+    <div className="container">
+      <pre>{JSON.stringify(session, null, 2)}</pre>
+    </div>
+  )
 }

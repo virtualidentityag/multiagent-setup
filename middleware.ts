@@ -1,20 +1,14 @@
-const authMiddleware = async (request: Request) => {
-  if (request.url.includes('/portal/')) {
-    const auth = await fetch('/api/auth/check');
-    if (auth.status === 401) {
-      return Response.redirect('/login');
-    }
-  }
+import NextAuth from "next-auth"
+import authConfig from "./auth.config"
+
+export const config = {
+  matcher: ["/(portal.*)"],
 };
 
-export default async function middleware(request: Request) {
-  const middlewares = [
-    authMiddleware,
-  ];
-  for (const middleware of middlewares) {
-    const response = await middleware(request);
-    if (response) {
-      return response;
-    }
+export default NextAuth(authConfig).auth((req) => {
+  console.log("Middleware auth callback:", req.auth);
+  if (!req.auth && req.nextUrl.pathname !== "/login") {
+    const newUrl = new URL("/login", req.nextUrl.origin)
+    return Response.redirect(newUrl)
   }
-}
+})
