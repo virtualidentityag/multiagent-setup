@@ -9,8 +9,12 @@ const port = 3000;
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
+console.log(`Starting server in ${dev ? "development" : "production"} mode...`);
 app.prepare().then(() => {
-  const httpServer = createServer(handle);
+  const httpServer = createServer((req, res) => {
+    const parsedUrl = parse(req.url, true)
+    handle(req, res, parsedUrl)
+  }).listen(port);
   const io = new Server(httpServer);
 
   io.on("connection", (socket) => {
