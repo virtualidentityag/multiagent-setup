@@ -2,11 +2,10 @@ import NextAuth from "next-auth"
 import authConfig from "./auth.config"
 
 export const config = {
-  matcher: ["/(portal.*)"],
+  matcher: ["/(portal.*)", "/"],
 };
 
 export default NextAuth(authConfig).auth((req) => {
-  console.log("Middleware auth callback:", req.auth);
   if (!req.auth && req.nextUrl.pathname !== "/login") {
     const newUrl = new URL("/login", req.nextUrl.origin)
     return Response.redirect(newUrl)

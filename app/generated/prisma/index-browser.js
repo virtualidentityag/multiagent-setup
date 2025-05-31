@@ -114,6 +114,9 @@ Prisma.NullTypes = {
  */
 
 exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
+  ReadUncommitted: 'ReadUncommitted',
+  ReadCommitted: 'ReadCommitted',
+  RepeatableRead: 'RepeatableRead',
   Serializable: 'Serializable'
 });
 
@@ -128,7 +131,6 @@ exports.Prisma.UserScalarFieldEnum = {
 };
 
 exports.Prisma.AccountScalarFieldEnum = {
-  id: 'id',
   userId: 'userId',
   type: 'type',
   provider: 'provider',
@@ -145,7 +147,6 @@ exports.Prisma.AccountScalarFieldEnum = {
 };
 
 exports.Prisma.SessionScalarFieldEnum = {
-  id: 'id',
   sessionToken: 'sessionToken',
   userId: 'userId',
   expires: 'expires',
@@ -170,9 +171,31 @@ exports.Prisma.AuthenticatorScalarFieldEnum = {
   transports: 'transports'
 };
 
+exports.Prisma.ThreadScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  authorId: 'authorId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.MessageScalarFieldEnum = {
+  id: 'id',
+  content: 'content',
+  threadId: 'threadId',
+  authorId: 'authorId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
 };
 
 exports.Prisma.NullsOrder = {
@@ -186,7 +209,9 @@ exports.Prisma.ModelName = {
   Account: 'Account',
   Session: 'Session',
   VerificationToken: 'VerificationToken',
-  Authenticator: 'Authenticator'
+  Authenticator: 'Authenticator',
+  Thread: 'Thread',
+  Message: 'Message'
 };
 
 /**

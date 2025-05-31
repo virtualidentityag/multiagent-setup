@@ -5,7 +5,7 @@ import { AuthError } from "next-auth"
 const SIGNIN_ERROR_URL = "/error"
 
 export default async function SignInPage(props: {
-  searchParams: { callbackUrl: string | undefined }
+  searchParams: Promise<{ callbackUrl: string | undefined }>
 }) {
   const session = await auth();
   return (
@@ -15,7 +15,7 @@ export default async function SignInPage(props: {
         action={async () => {
           "use server"
           try {
-            await signIn('github', {
+            await signIn('microsoft-entra-id', {
               redirectTo: (await props.searchParams)?.callbackUrl ?? "",
             })
           } catch (error) {
@@ -35,7 +35,7 @@ export default async function SignInPage(props: {
         }}
       >
         <button type="submit">
-          <span>Sign in with Github</span>
+          <span>Sign in with Microsoft</span>
         </button>
       </form>
     </div>
