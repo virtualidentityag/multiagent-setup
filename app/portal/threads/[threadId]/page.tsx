@@ -13,13 +13,6 @@ export default async function Portal({ params }: Readonly<{ params: Promise<{ th
   const user = await prisma.user.findFirst({
     where: { email: session?.user?.email || '' },
   });
-  const messages = await prisma.message.findMany({
-    where: { threadId },
-    orderBy: { createdAt: 'asc' },
-  });
-
-  console.log("Fetched messages:", messages);
-
 
   return (
     <div className="container w-full flex flex-col gap-4 p-4 items-center">

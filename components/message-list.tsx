@@ -5,6 +5,7 @@ import { ChatBubble, ChatBubbleAction, ChatBubbleAvatar, ChatBubbleMessage } fro
 import { ChatMessageList } from '@/components/ui/chat/chat-message-list'
 import { Message } from '@/app/generated/prisma';
 import { Copy, RefreshCcw } from 'lucide-react';
+import Markdown from 'react-markdown'
 
 export function MessageList() {
   const { messages } = useMessages();
@@ -25,7 +26,9 @@ export function MessageList() {
             <ChatBubbleMessage
               className={isUser ? "bg-sky-400" : ""}
             >
-              {message.content}
+              <Markdown>
+                {message.content.split('\\n').join('  \n')}</Markdown>
+              <Markdown />
 
               {!isUser && (
                 <div>
