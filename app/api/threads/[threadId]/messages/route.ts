@@ -1,32 +1,6 @@
-import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
 import { NextAuthRequest } from 'next-auth';
-import { revalidatePath } from 'next/cache';
 import { NextResponse } from 'next/server';
-
-export const GET = auth(async (request: NextAuthRequest, { params }: { params: Promise<{ threadId: string }> }) => {
-  const session = request.auth;
-  const userEmail = session?.user?.email;
-  const { threadId } = await params
-  const thread = await prisma.thread.findUnique({
-    where: {
-      id: threadId,
-      author: { email: userEmail || '' }
-    },
-    include: {
-      messages: {
-        orderBy: { createdAt: 'asc' },
-      },
-    }
-  });
-  if (!thread) {
-    return NextResponse.json({ error: 'Thread not found' }, { status: 404 });
-  }
-  return NextResponse.json(thread.messages, {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
-});
 
 export const POST = async (request: NextAuthRequest, { params }: { params: Promise<{ threadId: string }> }) => {
   const secret = request.headers.get('Secret');
@@ -48,13 +22,14 @@ export const POST = async (request: NextAuthRequest, { params }: { params: Promi
   if (!thread) {
     return NextResponse.json({ error: 'Thread not found' }, { status: 404 });
   }
-  await prisma.message.create({
+  const newMessage = await prisma.message.create({
     data: {
       content: message,
       threadId: thread.id,
     }
   });
-  revalidatePath(`/portal/threads/${threadId}`);
+  global._io.to(thread.id).emit('message', newMessage);
+
   return NextResponse.json({}, {
     status: 200,
     headers: { 'Content-Type': 'application/json' },

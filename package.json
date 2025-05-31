@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev:next": "next dev --turbopack",
+    "dev": "node server.js",
     "build": "prisma generate && next build",
-    "start": "next start",
+    "start:next": "next start",
+    "start": "NODE_ENV=production node server.js",
     "lint": "next lint"
   },
   "dependencies": {
