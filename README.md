@@ -1,36 +1,90 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Setting Up the Project
 
-## Getting Started
+To get started with the project, follow these steps:
 
-First, run the development server:
+1. **Clone the Repository**:
+   ```bash
+   git clone <repository-url>
+   cd langdock-proxy
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2. **Install Dependencies**:
+   Use your preferred package manager to install the required dependencies:
+   ```bash
+   npm install
+   # or
+   yarn install
+   # or
+   pnpm install
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. **Environment Variables**:
+   Create a `.env.local` file in the root directory and configure the necessary environment variables. Refer to the `.env` file for the required variables.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4. **Run the Development Server**:
+   Start the development server:
+   ```bash
+   npm run dev
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+5. **Database Setup**:
+   - Ensure you have a PostgreSQL database running.
+   - Update the `DATABASE_URL` in the `.env.example` file with your database connection string.
+   - Run the Prisma migrations to set up the database schema:
+     ```bash
+     npx prisma migrate dev
+     ```
 
-## Learn More
+## Key Features
 
-To learn more about Next.js, take a look at the following resources:
+1. **Authentication**:
+   - The project uses `next-auth` for authentication. Configuration is located in `auth.config.ts`.
+   - Middleware in `middleware.ts` ensures protected routes redirect unauthenticated users to the login page.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+2. **Proxy API**:
+   - Proxy routes under `app/api/proxy` handle requests to external services like OpenAI APIs.
+   - Example: `app/api/proxy/chat/completions/route.ts` forwards chat completion requests securely.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. **Frontend Components**:
+   - Reusable UI components are located in the `components` directory.
+   - Example: `components/message-list.tsx` renders a list of chat messages.
 
-## Deploy on Vercel
+4. **Database Integration**:
+   - Prisma is used as the ORM for database interactions.
+   - Models and schema are defined in `prisma/schema.prisma`.
+   - Generated Prisma client is located in `lib/prisma/generated`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Development Guidelines
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Code Style**:
+   - Follow the ESLint rules defined in `eslint.config.mjs`.
+   - Use Prettier for consistent formatting.
+
+2. **Commit Messages**:
+   - Follow the conventional commit format:
+     ```
+     <type>: <description>
+     ```
+
+3. **Pull Requests**:
+   - Provide a clear description of the changes.
+
+## Troubleshooting
+
+1. **Common Issues**:
+   - **Environment Variables Missing**: Ensure `.env` is properly configured.
+   - **Database Connection Errors**: Verify the `DATABASE_URL` and ensure the database is running.
+
+2. **Debugging**:
+   - Use the browser's developer tools for frontend issues.
+   - Add `console.log` statements or use a debugger for backend issues.
+
+3. **Logs**:
+   - Check server logs in the terminal for errors.
+   - Use Prisma's query logging for database-related issues.
+
+## Additional Resources
+
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [NextAuth.js Documentation](https://next-auth.js.org/getting-started/introduction)
