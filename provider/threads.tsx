@@ -1,6 +1,6 @@
 "use client"
 
-import { Thread } from '@/app/generated/prisma';
+import { Thread } from '@/lib/prisma';
 import { createContext, useContext, useState } from "react";
 
 const ThreadContext = createContext<{

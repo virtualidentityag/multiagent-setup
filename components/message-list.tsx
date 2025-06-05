@@ -3,7 +3,7 @@
 import { useMessages } from '@/provider/messages';
 import { ChatBubble, ChatBubbleAction, ChatBubbleAvatar, ChatBubbleMessage } from '@/components/ui/chat/chat-bubble'
 import { ChatMessageList } from '@/components/ui/chat/chat-message-list'
-import { Message } from '@/app/generated/prisma';
+import { Message } from '@/lib/prisma';
 import { Copy, RefreshCcw } from 'lucide-react';
 import Markdown from 'react-markdown'
 

@@ -2,6 +2,11 @@ import prisma from '@/lib/prisma';
 import { NextAuthRequest } from 'next-auth';
 import { NextResponse } from 'next/server';
 
+declare global {
+  // eslint-disable-next-line no-var
+  var _io: any;
+}
+
 export const POST = async (request: NextAuthRequest, { params }: { params: Promise<{ threadId: string }> }) => {
   const secret = request.headers.get('Secret');
   if (secret !== process.env.INCOMING_MESSAGE_SECRET) {

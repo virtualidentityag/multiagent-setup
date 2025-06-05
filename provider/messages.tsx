@@ -1,6 +1,6 @@
 "use client"
 
-import { Message } from '@/app/generated/prisma';
+import { Message } from '@/lib/prisma';
 import { createContext, useContext, useEffect, useState } from "react";
 import { socket } from "@/lib/socket";
 import { useThreads } from './threads';
