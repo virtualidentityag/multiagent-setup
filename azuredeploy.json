@@ -19,7 +19,9 @@
   },
   "variables": {
     "container1name": "vi-agents-openwebui",
-    "container1image": "ghcr.io/open-webui/open-webui:main"
+    "container1image": "ghcr.io/open-webui/open-webui:main",
+    "container2name": "vi-agents-langdock-proxy",
+    "container2image": "ghcr.io/virtualidentityag/multiagent-setup-langdock-proxy:latest"
   },
   "resources": [
     {
@@ -85,6 +87,23 @@
                 }
               ]
             }
+          },
+          {
+            "name": "[variables('container2name')]",
+            "properties": {
+              "image": "[variables('container2image')]",
+              "ports": [
+                {
+                  "port": 3000
+                }
+              ],
+              "resources": {
+                "requests": {
+                  "cpu": 1,
+                  "memoryInGB": 1.5
+                }
+              }
+            }
           }
         ],
         "osType": "Linux",
@@ -94,6 +113,10 @@
             {
               "protocol": "TCP",
               "port": 8080
+            },
+            {
+              "protocol": "TCP",
+              "port": 3000
             }
           ]
         },
