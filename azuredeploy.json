@@ -2,26 +2,44 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "prefix": {
+      "type": "string",
+      "defaultValue": "vi",
+      "metadata": {
+        "description": "Prefix for the setup group."
+      }
+    },
+    "environment": {
+      "type": "string",
+      "defaultValue": "",
+      "allowedValues": [
+        "dev",
+        "staging",
+        ""
+      ],
+      "metadata": {
+        "description": "Deployment environment."
+      }
+    },
     "containerGroupName": {
       "type": "string",
-      "defaultValue": "viagentscontainers",
+      "defaultValue": "[concat(parameters('environment'), parameters('prefix'), 'agentscontainers')]",
       "metadata": {
         "description": "Container Group name."
       }
     },
     "storageAccountName": {
       "type": "string",
-      "defaultValue": "viagentsstorage",
+      "defaultValue": "[concat(parameters('environment'), parameters('prefix'), 'agentsstorage')]",
       "metadata": {
         "description": "Storage account name"
       }
     }
   },
   "variables": {
-    "container1name": "vi-agents-openwebui",
+    "container1name": "[concat(parameters('environment'), parameters('prefix'), '-agents-openwebui')]",
     "container1image": "ghcr.io/open-webui/open-webui:main",
-    "container2name": "vi-agents-langdock-proxy",
-    "container2image": "ghcr.io/virtualidentityag/multiagent-setup-langdock-proxy:latest"
+    "dnsZoneName": "[concat(if(equals(parameters('environment'), ''), '', concat(parameters('environment'), '.')), parameters('prefix'), '.agents.virtual-identity.com')]"
   },
   "resources": [
     {
@@ -69,15 +87,21 @@
             "name": "[variables('container1name')]",
             "properties": {
               "image": "[variables('container1image')]",
+              "environmentVariables": [
+                {
+                  "name": "PORT",
+                  "value": "80"
+                }
+              ],
               "ports": [
                 {
-                  "port": 8080
+                  "port": 80
                 }
               ],
               "resources": {
                 "requests": {
-                  "cpu": 1,
-                  "memoryInGB": 1.5
+                  "cpu": 2,
+                  "memoryInGB": 3
                 }
               },
               "volumeMounts": [
@@ -87,23 +111,6 @@
                 }
               ]
             }
-          },
-          {
-            "name": "[variables('container2name')]",
-            "properties": {
-              "image": "[variables('container2image')]",
-              "ports": [
-                {
-                  "port": 3000
-                }
-              ],
-              "resources": {
-                "requests": {
-                  "cpu": 1,
-                  "memoryInGB": 1.5
-                }
-              }
-            }
           }
         ],
         "osType": "Linux",
@@ -111,12 +118,8 @@
           "type": "Public",
           "ports": [
             {
-              "protocol": "TCP",
-              "port": 8080
-            },
-            {
-              "protocol": "TCP",
-              "port": 3000
+              "port": 80,
+              "protocol": "TCP"
             }
           ]
         },
@@ -128,6 +131,37 @@
               "storageAccountName": "[parameters('storageAccountName')]",
               "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2023-05-01').keys[0].value]"
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('dnsZoneName')]",
+      "type": "Microsoft.Network/dnsZones",
+      "apiVersion": "2018-05-01",
+      "location": "global",
+      "properties": {}
+    },
+    {
+      "name": "[concat(variables('dnsZoneName'), '/', if(
+        equals(
+          parameters('environment'), ''
+        ),
+        '@',
+        parameters('environment')
+      ))]",
+      "type": "Microsoft.Network/dnsZones/A",
+      "apiVersion": "2018-05-01",
+      "location": "global",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/dnsZones', variables('dnsZoneName'))]",
+        "[resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('containerGroupName'))]"
+      ],
+      "properties": {
+        "TTL": 3600,
+        "ARecords": [
+          {
+            "ipv4Address": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('containerGroupName'))).ipAddress.ip]"
           }
         ]
       }
