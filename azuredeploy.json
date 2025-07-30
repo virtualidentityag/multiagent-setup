@@ -91,6 +91,10 @@
                 {
                   "name": "PORT",
                   "value": "80"
+                },
+                {
+                  "name": "AIOHTTP_CLIENT_TIMEOUT",
+                  "value": "600"
                 }
               ],
               "ports": [
