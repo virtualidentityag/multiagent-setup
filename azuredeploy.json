@@ -34,14 +34,33 @@
       "metadata": {
         "description": "Storage account name"
       }
+    },
+    "postgresServerName": {
+      "type": "string",
+      "defaultValue": "[concat(parameters('environment'), parameters('prefix'), 'agentsdb')]",
+      "metadata": {
+        "description": "PostgreSQL server name."
+      }
+    },
+    "postgresAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "PostgreSQL admin username."
+      }
+    },
+    "postgresAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "PostgreSQL admin password."
+      }
     }
   },
   "variables": {
     "container1name": "[concat(parameters('environment'), parameters('prefix'), '-agents-openwebui')]",
-    "container1image": "ghcr.io/open-webui/open-webui:main",
-    "dnsZoneName": "[concat(if(equals(parameters('environment'), ''), '', concat(parameters('environment'), '.')), parameters('prefix'), '.agents.virtual-identity.com')]"
+    "container1image": "ghcr.io/open-webui/open-webui:main"
   },
   "resources": [
+    // Storage Account
     {
       "name": "[parameters('storageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
@@ -61,6 +80,7 @@
         "allowSharedKeyAccess": true
       }
     },
+    // File Share Default
     {
       "name": "[concat(parameters('storageAccountName'), '/default/', parameters('containerGroupName'), 'share')]",
       "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
@@ -72,8 +92,41 @@
         "publicAccess": "None"
       }
     },
+    // PostgreSQL Flexible Server
     {
-      "name": "[parameters('containerGroupName')]",
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+      "apiVersion": "2025-01-01-preview",
+      "name": "[parameters('postgresServerName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "administratorLogin": "[parameters('postgresAdminUsername')]",
+        "administratorLoginPassword": "[parameters('postgresAdminPassword')]",
+        "authConfig": {
+          "activeDirectoryAuth": "Disabled",
+          "passwordAuth": "Enabled"
+        },
+        "backup": {
+          "backupRetentionDays": 7,
+          "geoRedundantBackup": "Disabled"
+        },
+        "network": {
+          "publicNetworkAccess": "Enabled"
+        },
+        "storage": {
+          "storageSizeGB": 128,
+          "tier": "P10",
+          "autoGrowEnabled": false
+        },
+        "version": "17"
+      },
+      "sku": {
+        "name": "Standard_D2ds_v5",
+        "tier": "GeneralPurpose"
+      }
+    },
+    // Container Group for opwebui
+    {
+      "name": "[variables('container1name')]",
       "type": "Microsoft.ContainerInstance/containerGroups",
       "apiVersion": "2023-05-01",
       "dependsOn": [
@@ -104,8 +157,8 @@
               ],
               "resources": {
                 "requests": {
-                  "cpu": 2,
-                  "memoryInGB": 3
+                  "cpu": 1,
+                  "memoryInGB": 1
                 }
               },
               "volumeMounts": [
@@ -138,43 +191,7 @@
           }
         ]
       }
-    },
-    {
-      "name": "[variables('dnsZoneName')]",
-      "type": "Microsoft.Network/dnsZones",
-      "apiVersion": "2018-05-01",
-      "location": "global",
-      "properties": {}
-    },
-    {
-      "name": "[concat(variables('dnsZoneName'), '/', if(
-        equals(
-          parameters('environment'), ''
-        ),
-        '@',
-        parameters('environment')
-      ))]",
-      "type": "Microsoft.Network/dnsZones/A",
-      "apiVersion": "2018-05-01",
-      "location": "global",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/dnsZones', variables('dnsZoneName'))]",
-        "[resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('containerGroupName'))]"
-      ],
-      "properties": {
-        "TTL": 3600,
-        "ARecords": [
-          {
-            "ipv4Address": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('containerGroupName'))).ipAddress.ip]"
-          }
-        ]
-      }
     }
   ],
-  "outputs": {
-    "containerIPv4Address": {
-      "type": "string",
-      "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('containerGroupName'))).ipAddress.ip]"
-    }
-  }
+  "outputs": {}
 }
