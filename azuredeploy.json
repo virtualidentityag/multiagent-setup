@@ -53,6 +53,13 @@
       "metadata": {
         "description": "PostgreSQL admin password."
       }
+    },
+    "frontdoorName": {
+      "type": "string",
+      "defaultValue": "[concat(parameters('environment'), parameters('prefix'), 'agentsfrontdoor')]",
+      "metadata": {
+        "description": "Front Door name."
+      }
     }
   },
   "variables": {
@@ -124,9 +131,45 @@
         "tier": "GeneralPurpose"
       }
     },
+    {
+      "apiVersion": "2025-01-01-preview",
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('postgresServerName'))]"
+      ],
+      "name": "[concat(parameters('postgresServerName'), '/azure.extensions')]",
+      "properties": {
+        "source": "user-override",
+        "value": "VECTOR"
+      },
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers/configurations"
+    },
+    {
+      "apiVersion": "2025-01-01-preview",
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('postgresServerName'))]"
+      ],
+      "name": "[concat(parameters('postgresServerName'), '/chat_cache')]",
+      "properties": {
+        "charset": "UTF8",
+        "collation": "en_US.utf8"
+      },
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases"
+    },
+    {
+      "apiVersion": "2025-01-01-preview",
+      "dependsOn": [
+        "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', parameters('postgresServerName'))]"
+      ],
+      "name": "[concat(parameters('postgresServerName'), '/rag')]",
+      "properties": {
+        "charset": "UTF8",
+        "collation": "en_US.utf8"
+      },
+      "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases"
+    },
     // Container Group for opwebui
     {
-      "name": "[variables('container1name')]",
+      "name": "[parameters('containerGroupName')]",
       "type": "Microsoft.ContainerInstance/containerGroups",
       "apiVersion": "2023-05-01",
       "dependsOn": [
@@ -148,6 +191,54 @@
                 {
                   "name": "AIOHTTP_CLIENT_TIMEOUT",
                   "value": "600"
+                },
+                // {
+                //   "name": "HF_HUB_OFFLINE",
+                //   "value": "1"
+                // },
+                {
+                  "name": "SHOW_ADMIN_DETAILS",
+                  "value": "False"
+                },
+                {
+                  "name": "WEBUI_NAME",
+                  "value": "VI Agents"
+                },
+                {
+                  "name": "ENABLE_OLLAMA_API",
+                  "value": "False"
+                },
+                {
+                  "name": "ENABLE_OPENAI_API",
+                  "value": "False"
+                },
+                {
+                  "name": "ENABLE_CODE_EXECUTION",
+                  "value": "False"
+                },
+                {
+                  "name": "ENABLE_CODE_INTERPRETER",
+                  "value": "False"
+                },
+                {
+                  "name": "ENABLE_EVALUATION_ARENA_MODELS",
+                  "value": "False"
+                },
+                {
+                  "name": "ENABLE_COMMUNITY_SHARING",
+                  "value": "False"
+                },
+                {
+                  "name": "RAG_EMBEDDING_MODEL_AUTO_UPDATE",
+                  "value": "False"
+                },
+                {
+                  "name": "RAG_RERANKING_MODEL_AUTO_UPDATE",
+                  "value": "False"
+                },
+                {
+                  "name": "WHISPER_MODEL_AUTO_UPDATE",
+                  "value": "False"
                 }
               ],
               "ports": [
@@ -171,6 +262,7 @@
           }
         ],
         "osType": "Linux",
+        "restartPolicy": "Never",
         "ipAddress": {
           "type": "Public",
           "ports": [
@@ -191,6 +283,205 @@
           }
         ]
       }
+    },
+    // Front Door
+    {
+      "apiVersion": "2025-04-15",
+      "kind": "frontdoor",
+      "location": "Global",
+      "name": "[parameters('frontdoorName')]",
+      "sku": {
+        "name": "Standard_AzureFrontDoor"
+      },
+      "type": "Microsoft.Cdn/profiles"
+    },
+    {
+      "apiVersion": "2025-04-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', parameters('frontdoorName'))]"
+      ],
+      "location": "Global",
+      "name": "[concat(parameters('frontdoorName'), '/langdock-', uniqueString(subscription().subscriptionId))]",
+      "properties": {
+        "enabledState": "Enabled"
+      },
+      "type": "Microsoft.Cdn/profiles/afdendpoints"
+    },
+    {
+      "apiVersion": "2025-04-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', parameters('frontdoorName'))]"
+      ],
+      "location": "Global",
+      "name": "[concat(parameters('frontdoorName'), '/webui-', uniqueString(subscription().subscriptionId))]",
+      "properties": {
+        "enabledState": "Enabled"
+      },
+      "type": "Microsoft.Cdn/profiles/afdendpoints"
+    },
+    {
+      "apiVersion": "2025-04-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', parameters('frontdoorName'))]"
+      ],
+      "name": "[concat(parameters('frontdoorName'), '/webui')]",
+      "properties": {
+        "loadBalancingSettings": {
+          "additionalLatencyInMilliseconds": 50,
+          "sampleSize": 4,
+          "successfulSamplesRequired": 3
+        },
+        "sessionAffinityState": "Disabled"
+      },
+      "type": "Microsoft.Cdn/profiles/origingroups"
+    },
+    {
+      "apiVersion": "2025-04-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', parameters('frontdoorName'))]"
+      ],
+      "name": "[concat(parameters('frontdoorName'), '/langdock')]",
+      "properties": {
+        "loadBalancingSettings": {
+          "additionalLatencyInMilliseconds": 50,
+          "sampleSize": 4,
+          "successfulSamplesRequired": 3
+        },
+        "sessionAffinityState": "Disabled"
+      },
+      "type": "Microsoft.Cdn/profiles/origingroups"
+    },
+    {
+      "apiVersion": "2025-04-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles', parameters('frontdoorName'))]"
+      ],
+      "name": "[concat(parameters('frontdoorName'), '/langdock')]",
+      "type": "Microsoft.Cdn/profiles/rulesets"
+    },
+    {
+      "apiVersion": "2025-04-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/origingroups', parameters('frontdoorName'), 'langdock')]",
+        "[resourceId('Microsoft.Cdn/profiles', parameters('frontdoorName'))]"
+      ],
+      "name": "[concat(parameters('frontdoorName'), '/langdock/LangdockAPI')]",
+      "properties": {
+        "enabledState": "Enabled",
+        "enforceCertificateNameCheck": true,
+        "hostName": "api.langdock.com",
+        "httpPort": 80,
+        "httpsPort": 443,
+        "originHostHeader": "api.langdock.com",
+        "priority": 1,
+        "weight": 1000
+      },
+      "type": "Microsoft.Cdn/profiles/origingroups/origins"
+    },
+    {
+      "apiVersion": "2025-04-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/origingroups', parameters('frontdoorName'), 'webui')]",
+        "[resourceId('Microsoft.Cdn/profiles', parameters('frontdoorName'))]",
+        "[resourceId('Microsoft.ContainerInstance/containerGroups', parameters('containerGroupName'))]"
+      ],
+      "name": "[concat(parameters('frontdoorName'), '/webui/openwebui')]",
+      "properties": {
+        "enabledState": "Enabled",
+        "enforceCertificateNameCheck": true,
+        "hostName": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', parameters('containerGroupName'))).ipAddress.ip]",
+        "httpPort": 80,
+        "httpsPort": 443,
+        "originHostHeader": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups', parameters('containerGroupName'))).ipAddress.ip]",
+        "priority": 1,
+        "weight": 1000
+      },
+      "type": "Microsoft.Cdn/profiles/origingroups/origins"
+    },
+    {
+      "apiVersion": "2025-04-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/rulesets', parameters('frontdoorName'), 'langdock')]",
+        "[resourceId('Microsoft.Cdn/profiles', parameters('frontdoorName'))]"
+      ],
+      "name": "[concat(parameters('frontdoorName'), '/langdock/all')]",
+      "properties": {
+        "actions": [
+          {
+            "name": "UrlRewrite",
+            "parameters": {
+              "destination": "/openai/eu/v1/",
+              "preserveUnmatchedPath": true,
+              "sourcePattern": "/api/v1/",
+              "typeName": "DeliveryRuleUrlRewriteActionParameters"
+            }
+          }
+        ],
+        "conditions": [],
+        "matchProcessingBehavior": "Continue",
+        "order": 100
+      },
+      "type": "Microsoft.Cdn/profiles/rulesets/rules"
+    },
+    {
+      "apiVersion": "2025-04-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/afdendpoints', parameters('frontdoorName'), concat('webui-', uniqueString(subscription().subscriptionId)))]",
+        "[resourceId('Microsoft.Cdn/profiles', parameters('frontdoorName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/origingroups', parameters('frontdoorName'), 'webui')]"
+      ],
+      "name": "[concat(parameters('frontdoorName'), '/webui-', uniqueString(subscription().subscriptionId), '/chat')]",
+      "properties": {
+        "enabledState": "Enabled",
+        "forwardingProtocol": "HttpOnly",
+        "httpsRedirect": "Enabled",
+        "linkToDefaultDomain": "Enabled",
+        "originGroup": {
+          "id": "[resourceId('Microsoft.Cdn/profiles/origingroups', parameters('frontdoorName'), 'webui')]"
+        },
+        "patternsToMatch": [
+          "/*"
+        ],
+        "ruleSets": [],
+        "supportedProtocols": [
+          "Http",
+          "Https"
+        ]
+      },
+      "type": "Microsoft.Cdn/profiles/afdendpoints/routes"
+    },
+    {
+      "apiVersion": "2025-04-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/afdendpoints', parameters('frontdoorName'), concat('langdock-', uniqueString(subscription().subscriptionId)))]",
+        "[resourceId('Microsoft.Cdn/profiles', parameters('frontdoorName'))]",
+        "[resourceId('Microsoft.Cdn/profiles/origingroups', parameters('frontdoorName'), 'langdock')]",
+        "[resourceId('Microsoft.Cdn/profiles/rulesets', parameters('frontdoorName'), 'langdock')]"
+      ],
+      "name": "[concat(parameters('frontdoorName'), '/langdock-', uniqueString(subscription().subscriptionId), '/langdockproxy')]",
+      "properties": {
+        "customDomains": [],
+        "enabledState": "Enabled",
+        "forwardingProtocol": "MatchRequest",
+        "httpsRedirect": "Enabled",
+        "linkToDefaultDomain": "Enabled",
+        "originGroup": {
+          "id": "[resourceId('Microsoft.Cdn/profiles/origingroups', parameters('frontdoorName'), 'langdock')]"
+        },
+        "patternsToMatch": [
+          "/*"
+        ],
+        "ruleSets": [
+          {
+            "id": "[resourceId('Microsoft.Cdn/profiles/rulesets', parameters('frontdoorName'), 'langdock')]"
+          }
+        ],
+        "supportedProtocols": [
+          "Http",
+          "Https"
+        ]
+      },
+      "type": "Microsoft.Cdn/profiles/afdendpoints/routes"
     }
   ],
   "outputs": {}

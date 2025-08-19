@@ -34,15 +34,6 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - open-webui:/app/backend/data
-  
-  langdock-proxy:
-    build:
-      context: ./langdock-proxy
-      dockerfile: Dockerfile
-    container_name: langdock-proxy
-    networks: ['demo']
-    ports:
-      - "3001:3000"
 
   postgres:
     image: postgres:16-alpine
