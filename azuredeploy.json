@@ -415,11 +415,92 @@
               "sourcePattern": "/api/v1/",
               "typeName": "DeliveryRuleUrlRewriteActionParameters"
             }
+          },
+          {
+            "name": "ModifyResponseHeader",
+            "parameters": {
+              "headerAction": "Append",
+              "headerName": "x-front-door-rule",
+              "typeName": "DeliveryRuleHeaderActionParameters",
+              "value": "1"
+            }
           }
         ],
         "conditions": [],
         "matchProcessingBehavior": "Continue",
         "order": 100
+      },
+      "type": "Microsoft.Cdn/profiles/rulesets/rules"
+    },
+    {
+      "apiVersion": "2025-04-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/rulesets', parameters('frontdoorName'), 'langdock')]",
+        "[resourceId('Microsoft.Cdn/profiles', parameters('frontdoorName'))]"
+      ],
+      "name": "[concat(parameters('frontdoorName'), '/langdock/rewritemodels')]",
+      "properties": {
+        "actions": [
+          {
+            "name": "UrlRewrite",
+            "parameters": {
+              "destination": "/assistant/v1/models",
+              "preserveUnmatchedPath": true,
+              "sourcePattern": "/api/v1/models",
+              "typeName": "DeliveryRuleUrlRewriteActionParameters"
+            }
+          },
+          {
+            "name": "ModifyResponseHeader",
+            "parameters": {
+              "headerAction": "Append",
+              "headerName": "x-front-door-rule",
+              "typeName": "DeliveryRuleHeaderActionParameters",
+              "value": "1"
+            }
+          }
+        ],
+        "conditions": [
+          {
+            "name": "RequestUri",
+            "parameters": {
+              "matchValues": [
+                "/models"
+              ],
+              "negateCondition": false,
+              "operator": "EndsWith",
+              "transforms": [],
+              "typeName": "DeliveryRuleRequestUriConditionParameters"
+            }
+          }
+        ],
+        "matchProcessingBehavior": "Stop",
+        "order": 0
+      },
+      "type": "Microsoft.Cdn/profiles/rulesets/rules"
+    },
+    {
+      "apiVersion": "2025-04-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Cdn/profiles/rulesets', parameters('frontdoorName'), 'langdock')]",
+        "[resourceId('Microsoft.Cdn/profiles', parameters('frontdoorName'))]"
+      ],
+      "name": "[concat(parameters('frontdoorName'), '/langdock/all')]",
+      "properties": {
+        "actions": [
+          {
+            "name": "UrlRewrite",
+            "parameters": {
+              "destination": "/openai/eu/v1/",
+              "preserveUnmatchedPath": true,
+              "sourcePattern": "/api/v1/",
+              "typeName": "DeliveryRuleUrlRewriteActionParameters"
+            }
+          }
+        ],
+        "conditions": [],
+        "matchProcessingBehavior": "Continue",
+        "order": 200
       },
       "type": "Microsoft.Cdn/profiles/rulesets/rules"
     },
